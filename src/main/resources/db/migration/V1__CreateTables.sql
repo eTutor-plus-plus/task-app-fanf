@@ -4,25 +4,15 @@ CREATE TYPE submission_mode AS ENUM ('run', 'diagnose', 'submit');
 CREATE CAST (CHARACTER VARYING as task_status) WITH INOUT AS IMPLICIT;
 CREATE CAST (CHARACTER VARYING as submission_mode) WITH INOUT AS IMPLICIT;
 
-CREATE TABLE task_group
-(
-    id         BIGINT      NOT NULL,
-    status     TASK_STATUS NOT NULL,
-    min_number INTEGER     NOT NULL, -- custom column
-    max_number INTEGER     NOT NULL, -- custom column
-    CONSTRAINT task_group_pk PRIMARY KEY (id)
-);
-
 CREATE TABLE task
 (
     id            BIGINT        NOT NULL,
     max_points    NUMERIC(7, 2) NOT NULL,
     status        TASK_STATUS   NOT NULL,
-    task_group_id BIGINT        NOT NULL,
-    solution      INTEGER       NOT NULL, -- custom column
-    CONSTRAINT task_pk PRIMARY KEY (id),
-    CONSTRAINT task_task_group_fk FOREIGN KEY (task_group_id) REFERENCES task_group (id)
-        ON DELETE CASCADE
+    specification  JSONB NOT NULL ,
+    rdbd_type integer NOT NULL,
+    CONSTRAINT task_pk PRIMARY KEY (id)
+
 );
 
 CREATE TABLE submission
