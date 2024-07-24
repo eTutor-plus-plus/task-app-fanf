@@ -5,6 +5,7 @@ import at.jku.dke.etutor.task_app.dto.TaskModificationResponseDto;
 import at.jku.dke.etutor.task_app.services.BaseTaskService;
 import at.jku.dke.task_app.fanf.data.entities.FanfTask;
 import at.jku.dke.task_app.fanf.data.repositories.FanfTaskRepository;
+import at.jku.dke.task_app.fanf.description_generation.DescriptionGeneration;
 import at.jku.dke.task_app.fanf.dto.ModifyFanfTaskDto;
 import at.jku.dke.task_app.fanf.evaluation.model.*;
 import at.jku.dke.task_app.fanf.parser.NFLexer;
@@ -56,17 +57,58 @@ public class FanfTaskService extends BaseTaskService<FanfTask, ModifyFanfTaskDto
     protected void updateTask(FanfTask task, ModifyTaskDto<ModifyFanfTaskDto> modifyTaskDto) {
         if (!modifyTaskDto.taskType().equals("fanf"))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid task type.");
-        task.setSpecification(task.getSpecification());
+        String specification = convertToJSONString(modifyTaskDto.additionalData());
+
+        task.setSpecification(specification);
         task.setRdbdType(modifyTaskDto.additionalData().getSubtype());
+
     }
 
     @Override
     protected TaskModificationResponseDto mapToReturnData(FanfTask task, boolean create) {
-        return new TaskModificationResponseDto(
-            this.messageSource.getMessage("defaultTaskDescription", null, Locale.GERMAN),
-            this.messageSource.getMessage("defaultTaskDescription", null, Locale.ENGLISH)
-        );
+        ObjectMapper objectMapper = new ObjectMapper();
+        switch (task.getRdbdType())
+        {
+            case 0 -> {
+                try {
+                    return DescriptionGeneration.printAssignmentForKeysDetermination(objectMapper.readValue(task.getSpecification(),KeysDeterminationSpecification.class).getBaseRelation(), 0);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            case 1 -> {
+                try {
+                    return DescriptionGeneration.printAssignmentForNormalization(objectMapper.readValue(task.getSpecification(),NormalizationSpecification.class), 0);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            case 2 -> {
+                try {
+                    return DescriptionGeneration.printAssignmentForMinimalCover(objectMapper.readValue(task.getSpecification(), MinimalCoverSpecification.class).getBaseRelation(), 0);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            case 3 -> {
+                try {
+                    return DescriptionGeneration.printAssignmentForAttributeClosure(objectMapper.readValue(task.getSpecification(),AttributeClosureSpecification.class), 0);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            case 4 -> {
+                try {
+                    return DescriptionGeneration.printAssignmentForNormalFormDetermination(objectMapper.readValue(task.getSpecification(),NormalformDeterminationSpecification.class).getBaseRelation(), 0);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return null;
     }
+
+
 
 
     private String convertToJSONString(ModifyFanfTaskDto dto) {

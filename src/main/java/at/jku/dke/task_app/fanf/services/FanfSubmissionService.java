@@ -8,7 +8,7 @@ import at.jku.dke.task_app.fanf.data.entities.FanfSubmission;
 import at.jku.dke.task_app.fanf.data.entities.FanfTask;
 import at.jku.dke.task_app.fanf.data.repositories.FanfSubmissionRepository;
 import at.jku.dke.task_app.fanf.data.repositories.FanfTaskRepository;
-import at.jku.dke.task_app.fanf.dto.BinarySearchSubmissionDto;
+import at.jku.dke.task_app.fanf.dto.FanfSubmissionDto;
 import at.jku.dke.task_app.fanf.evaluation.EvaluationService;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
  * This class provides methods for managing {@link FanfSubmission}s.
  */
 @Service
-public class FanfSubmissionService extends BaseSubmissionService<FanfTask, FanfSubmission, BinarySearchSubmissionDto> {
+public class FanfSubmissionService extends BaseSubmissionService<FanfTask, FanfSubmission, FanfSubmissionDto> {
 
     private final EvaluationService evaluationService;
 
@@ -33,18 +33,18 @@ public class FanfSubmissionService extends BaseSubmissionService<FanfTask, FanfS
     }
 
     @Override
-    protected FanfSubmission createSubmissionEntity(SubmitSubmissionDto<BinarySearchSubmissionDto> submitSubmissionDto) {
+    protected FanfSubmission createSubmissionEntity(SubmitSubmissionDto<FanfSubmissionDto> submitSubmissionDto) {
         return new FanfSubmission(submitSubmissionDto.submission().input());
     }
 
     @Override
-    protected GradingDto evaluate(SubmitSubmissionDto<BinarySearchSubmissionDto> submitSubmissionDto) {
+    protected GradingDto evaluate(SubmitSubmissionDto<FanfSubmissionDto> submitSubmissionDto) {
         return this.evaluationService.evaluate(submitSubmissionDto);
     }
 
     @Override
-    protected BinarySearchSubmissionDto mapSubmissionToSubmissionData(FanfSubmission submission) {
-        return new BinarySearchSubmissionDto(submission.getSubmission());
+    protected FanfSubmissionDto mapSubmissionToSubmissionData(FanfSubmission submission) {
+        return new FanfSubmissionDto(submission.getSubmission());
     }
 
 }
