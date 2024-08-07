@@ -18,6 +18,9 @@ import at.jku.dke.task_app.fanf.evaluation.analysis.normalform.NormalformAnalyze
 import at.jku.dke.task_app.fanf.evaluation.analysis.normalformdetermination.NormalformDeterminationAnalysis;
 import at.jku.dke.task_app.fanf.evaluation.analysis.normalformdetermination.NormalformDeterminationAnalyzer;
 import at.jku.dke.task_app.fanf.evaluation.analysis.normalization.KeysDeterminator;
+import at.jku.dke.task_app.fanf.evaluation.analysis.normalization.NormalizationAnalysis;
+import at.jku.dke.task_app.fanf.evaluation.analysis.normalization.NormalizationAnalyzer;
+import at.jku.dke.task_app.fanf.evaluation.analysis.normalization.NormalizationAnalyzerConfig;
 import at.jku.dke.task_app.fanf.evaluation.model.*;
 import at.jku.dke.task_app.fanf.parser.NFLexer;
 import at.jku.dke.task_app.fanf.parser.NFParser;
@@ -33,8 +36,10 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Service that evaluates submissions.
@@ -177,26 +182,60 @@ public class EvaluationService {
             criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
         }
 
-        switch (submission.feedbackLevel()) {
-            case 0:
-                break;
-            case 1:
-                if (analysis.getWrongLeveledDependencies() != null) {
+        if (!analysis.getOverallNormalformLevel().equals(analysis.getSubmittedLevel())) {
+            if ((submission.feedbackLevel() == 1) || (submission.feedbackLevel() == 2)) {
+                criteria.add(new CriterionDto(messageSource.getMessage("incorrectnormalform", null, Locale.of(submission.language())), null, false, messageSource.getMessage("normalformnotcorrect", new Object[]{analysis.getSubmittedLevel()}, Locale.of(submission.language()))));
+            }
 
-                    if (analysis.getWrongLeveledDependencies().size() > 0) {
+            if (submission.feedbackLevel() == 3) {
+                criteria.add(new CriterionDto(messageSource.getMessage("incorrectnormalform", null, Locale.of(submission.language())), null, false, messageSource.getMessage("normalformdoesnotmatch", new Object[]{normalformLevelToString(analysis.getSubmittedLevel(), Locale.of(submission.language())), normalformLevelToString(analysis.getOverallNormalformLevel(), Locale.of(submission.language()))}, Locale.of(submission.language()))));
+            }
+        }
+        if (!analysis.getWrongLeveledDependencies().isEmpty()) {
+            if (analysis.getWrongLeveledDependencies() != null) {
+                StringBuilder feedback = new StringBuilder();
+                switch (submission.feedbackLevel()) {
+                    case 0:
+                        break;
+                    case 1:
                         criteria.add(new CriterionDto(messageSource.getMessage("incorrectnormalformviolations", null, Locale.of(submission.language())), null, false, messageSource.getMessage("dependencynotviolatesnormalform", null, Locale.of(submission.language()))));
-                    }
-                }
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
+                        break;
+                    case 2:
+                        feedback = new StringBuilder();
+                        feedback.append(analysis.getWrongLeveledDependencies().size());
+                        if (analysis.getWrongLeveledDependencies().size() == 1) {
+                            feedback.append(" ").append(messageSource.getMessage("dependencyis", null, Locale.of(submission.language())));
+                        } else {
+                            feedback.append(" ").append(messageSource.getMessage("dependenciesare", null, Locale.of(submission.language())));
+                        }
+                        feedback.append(" ").append(messageSource.getMessage("notviolatenormalform", null, Locale.of(submission.language())));
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectnormalformviolations", null, Locale.of(submission.language())), null, false, feedback.toString()));
+                        break;
+                    case 3:
+                        feedback = new StringBuilder();
+                        feedback.append(messageSource.getMessage("violatenotspecifiednormalform", null, Locale.of(submission.language())));
+                        feedback.append("<table rules='cols' border='1' style='margin-top:5px;'>");
+                        feedback.append("	<tr>");
+                        feedback.append("		<td style='border-bottom:solid;border-bottom-width:thin;padding-left:10px;padding-right:10px'><i>").append(messageSource.getMessage("functionaldependency", null, Locale.of(submission.language()))).append("</i></td>");
+                        feedback.append("		<td style='border-bottom:solid;border-bottom-width:thin;padding-left:10px;padding-right:10px'><i>").append(messageSource.getMessage("violatednormalform", null, Locale.of(submission.language()))).append("</i></td>");
+                        feedback.append("		<td style='border-bottom:solid;border-bottom-width:thin;padding-left:10px;padding-right:10px'><i>").append(messageSource.getMessage("yoursolution", null, Locale.of(submission.language()))).append("</i></td>");
+                        feedback.append("	</tr>");
 
+                        for (Object[] entry : analysis.getWrongLeveledDependencies()) {
+                            feedback.append("	<tr>");
+                            feedback.append("		<td align='center'>").append(entry[0].toString().replaceAll("->", "&rarr;")).append("</td>");
+                            feedback.append("		<td align='center'>").append(normalformLevelToString((NormalformLevel) entry[1], Locale.of(submission.language()))).append("</td>");
+                            feedback.append("		<td align='center'>").append(normalformLevelToString((NormalformLevel) entry[2], Locale.of(submission.language()))).append("</td>");
+                            feedback.append("	</tr>");
+                        }
+                        feedback.append("</table>");
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectnormalformviolations", null, Locale.of(submission.language())), null, false, feedback.toString()));
+                        break;
+                }
+            }
 
         }
-        return new GradingDto(BigDecimal.ZERO, BigDecimal.ZERO, "Not implemented", null);
-
+        return new GradingDto(task.getMaxPoints(), actualPoints, generalFeedback, criteria);
     }
 
     private GradingDto evaluateAttributeClosure(FanfTask task, SubmitSubmissionDto<FanfSubmissionDto> submission) throws Exception {
@@ -456,7 +495,7 @@ public class EvaluationService {
                 }
 
                 if (analysis.getDependenciesCoverAnalysis() != null) {
-                    StringBuffer feedback = new StringBuffer();
+                    StringBuilder feedback = new StringBuilder();
                     if (!analysis.getDependenciesCoverAnalysis().submissionSuitsSolution()) {
                         if (analysis.getDependenciesCoverAnalysis().getMissingDependencies().size() > 0) {
                             feedback.append(messageSource.getMessage("minonedependencymissing", null, Locale.of(submission.language())));
@@ -497,7 +536,7 @@ public class EvaluationService {
                         criteria.add(new CriterionDto(messageSource.getMessage("extraneousattribute", null, Locale.of(submission.language())), null, false,
                             analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().size() + " " +
                                 (analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().size() == 1 ? messageSource.getMessage("dependencyis", null, Locale.of(submission.language())) : messageSource.getMessage("dependenciesare", null, Locale.of(submission.language())))
-                            + messageSource.getMessage("redundand", null, Locale.of(submission.language()))));
+                                + messageSource.getMessage("redundand", null, Locale.of(submission.language()))));
                     }
                 }
 
@@ -508,7 +547,7 @@ public class EvaluationService {
                     }
                 }
                 if (analysis.getDependenciesCoverAnalysis() != null) {
-                    StringBuffer feedback = new StringBuffer();
+                    StringBuilder feedback = new StringBuilder();
                     if (!analysis.getDependenciesCoverAnalysis().submissionSuitsSolution()) {
                         if (analysis.getDependenciesCoverAnalysis().getMissingDependencies().size() > 0) {
                             feedback.append(analysis.getDependenciesCoverAnalysis().getMissingDependencies().size());
@@ -561,7 +600,7 @@ public class EvaluationService {
                 }
 
                 if (analysis.getDependenciesCoverAnalysis() != null) {
-                    StringBuffer feedback = new StringBuffer();
+                    StringBuilder feedback = new StringBuilder();
                     if (!analysis.getDependenciesCoverAnalysis().submissionSuitsSolution()) {
                         if (analysis.getDependenciesCoverAnalysis().getMissingDependencies().size() > 0) {
                             feedback.append(analysis.getDependenciesCoverAnalysis().getMissingDependencies());
@@ -594,8 +633,209 @@ public class EvaluationService {
         return new GradingDto(task.getMaxPoints(), actualPoints, generalFeedback, criteria);
     }
 
-    private GradingDto evaluateNormalization(FanfTask task, SubmitSubmissionDto<FanfSubmissionDto> submission) {
-        return new GradingDto(BigDecimal.ZERO, BigDecimal.ZERO, "Not implemented", null);
+    private GradingDto evaluateNormalization(FanfTask task, SubmitSubmissionDto<FanfSubmissionDto> submission) throws Exception {
+        String submissionString = submission.submission().input();
+
+        CharStream submissionLexerInput = CharStreams.fromString(submissionString);
+        Lexer submissionLexer = new NFLexer(submissionLexerInput);
+        TokenStream submissionParserInput = new CommonTokenStream(submissionLexer);
+        NFParser submissionParser = new NFParser(submissionParserInput);
+
+        NFParserErrorCollector errorCollector = new NFParserErrorCollector();
+        // Source for adding to lexer: https://groups.google.com/g/antlr-discussion/c/FfiwtHCrgc0/m/_5wwPD3tK04J (Gerald Wimmer, 2024-01-21).
+        submissionLexer.addErrorListener(errorCollector);
+        submissionParser.addErrorListener(errorCollector);
+
+        NormalizationSpecification specification;
+        try {
+            specification = new ObjectMapper().readValue(task.getSpecification(), NormalizationSpecification.class);
+        } catch (Exception e) {
+            throw new Exception("Could not deserialize NormalizationSpecification because: " + e.getMessage());
+        }
+
+        NormalizationAnalyzerConfig normalizationAnalyzerConfig = new NormalizationAnalyzerConfig();
+
+        normalizationAnalyzerConfig.setBaseRelation(specification.getBaseRelation());
+        normalizationAnalyzerConfig.setDesiredNormalformLevel(specification.getTargetLevel());
+        normalizationAnalyzerConfig.setMaxLostDependencies(specification.getMaxLostDependencies());
+
+        // Get normalized relations from input String. (Gerald Wimmer, 2023-12-02)
+        Set<IdentifiedRelation> submissionSet = submissionParser.relationSetSubmission().relations;
+        NormalizationAnalysis analysis = new NormalizationAnalysis();
+        if (!errorCollector.getSyntaxErrors().isEmpty()) {
+            analysis.setSyntaxError(errorCollector.getSyntaxErrors().toArray(new String[0]));
+        } else {
+            boolean hasIncorrectSyntax = false;
+
+            // Check if there are relations with identical IDs (Gerald Wimmer, 2024-01-12)
+            Set<String> relationIDs = new HashSet<>();
+            Set<String> registeredDuplicates = new HashSet<>();
+            for (IdentifiedRelation r : submissionSet) {
+                if (relationIDs.contains(r.getID()) && !registeredDuplicates.contains(r.getID())) {
+                    analysis.appendSyntaxError("Syntax error: Duplicate relation ID \"" + r.getID() + "\"");
+                    registeredDuplicates.add(r.getID());
+                    hasIncorrectSyntax = true;
+                }
+                relationIDs.add(r.getID());
+            }
+
+            // Check if the relations contain any attributes not found in the base relation (Gerald Wimmer, 2024-01-12)
+            for (IdentifiedRelation r : submissionSet) {
+                Set<String> incorrectAttributes = new HashSet<>(r.getAttributes());
+                incorrectAttributes.addAll(r.getFunctionalDependencies().stream().flatMap(f -> f.getLhsAttributes().stream()).collect(Collectors.toSet()));
+                incorrectAttributes.addAll(r.getFunctionalDependencies().stream().flatMap(f -> f.getRhsAttributes().stream()).collect(Collectors.toSet()));
+                incorrectAttributes.addAll(r.getMinimalKeys().stream().flatMap(k -> k.getAttributes().stream()).collect(Collectors.toSet()));
+
+                incorrectAttributes.removeAll(specification.getBaseRelation().getAttributes());
+
+                if (!incorrectAttributes.isEmpty()) {
+                    analysis.appendSyntaxError(getAttributesNotInBaseRelationErrorMessage(incorrectAttributes, "Relation \"" + r.getID() + "\""));
+
+                    hasIncorrectSyntax = true;
+                }
+            }
+
+            if (!hasIncorrectSyntax) {
+                normalizationAnalyzerConfig.setNormalizedRelations(submissionSet);
+
+                analysis = NormalizationAnalyzer.analyze(normalizationAnalyzerConfig);
+            }
+        }
+        analysis.setSubmission((Serializable) submissionSet);
+
+
+        if (submission.mode().equals(SubmissionMode.RUN)) {
+
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty() ? "Syntax correct" : analysis.getSyntaxError(), null);
+        }
+
+        //grade
+
+        BigDecimal actualPoints = task.getMaxPoints();
+
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getDecompositionAnalysis().getMissingAttributes().size())
+            .multiply(BigDecimal.valueOf(specification.getPenaltyPerLostAttribute())));
+        if (!analysis.getLossLessAnalysis().submissionSuitsSolution()) {
+            actualPoints = actualPoints.subtract(BigDecimal.valueOf(specification.getPenaltyForLossyDecomposition()));
+        }
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getCanonicalRepresentationAnalyses().values().stream()
+            .mapToInt(canonicalRepresentationAnalysis -> canonicalRepresentationAnalysis.getNotCanonicalDependencies().size())
+            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerNonCanonicalDependency())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getTrivialDependenciesAnalyses().values().stream()
+            .mapToInt(trivialDependenciesAnalysis -> trivialDependenciesAnalysis.getTrivialDependencies().size())
+            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerTrivialDependency())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getExtraneousAttributesAnalyses().values().stream()
+            .mapToInt(extraneousAttributeAnalysis -> extraneousAttributeAnalysis.getExtraneousAttributes().values().stream()
+                .mapToInt(List::size)
+                .sum())
+            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerExtraneousAttributeInDependencies())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getRedundantDependenciesAnalyses().values().stream()
+            .mapToInt(redundantDependenciesAnalysis -> redundantDependenciesAnalysis.getRedundantDependencies().size())
+            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerRedundantDependency())));
+        if (analysis.getDepPresAnalysis().lostFunctionalDependenciesCount() > analysis.getMaxLostDependencies()) {
+            actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getDepPresAnalysis().lostFunctionalDependenciesCount() - analysis.getMaxLostDependencies())
+                .multiply(BigDecimal.valueOf(specification.getPenaltyPerExcessiveLostDependency())));
+        }
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getRbrAnalyses().values().stream()
+            .mapToInt(rbrAnalysis -> rbrAnalysis.getMissingFunctionalDependencies().size())
+            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerMissingNewDependency())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getRbrAnalyses().values().stream()
+            .mapToInt(rbrAnalysis -> rbrAnalysis.getAdditionalFunctionalDependencies().size())
+            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerIncorrectNewDependency())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getKeysAnalyses().values().stream()
+            .mapToInt(keysAnalysis -> keysAnalysis.getMissingKeys().size())
+            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerMissingKey())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getKeysAnalyses().values().stream()
+            .mapToInt(keysAnalysis -> keysAnalysis.getAdditionalKeys().size())
+            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerIncorrectKey())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getNormalformAnalyses().values().stream()
+            .filter(normalformAnalysis -> !normalformAnalysis.submissionSuitsSolution())
+            .count()).multiply(BigDecimal.valueOf(specification.getPenaltyPerIncorrectNFRelation())));
+
+        //get language
+        Locale locale = Locale.of(submission.language());
+
+        //report
+
+
+        String generalFeedback = "";
+        if (analysis.submissionSuitsSolution()) {
+            generalFeedback = messageSource.getMessage("correctsolution", null, locale);
+        } else {
+            generalFeedback = messageSource.getMessage("notcorrectsolution", null, locale);
+        }
+
+        List<CriterionDto> criteria = new ArrayList<>();
+
+        //SYNTAX
+        if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
+            criteria.add(new CriterionDto("Syntax", null, false, "Syntax correct"));
+        } else {
+            criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
+        }
+
+        //REPORT DECOMPOSITION_ANALYSIS
+        if ((analysis.getDecompositionAnalysis() != null) && (!analysis.getDecompositionAnalysis().submissionSuitsSolution())) {
+            switch (submission.feedbackLevel()) {
+                case 0:
+                    break;
+                case 1:
+                    criteria.add(new CriterionDto(messageSource.getMessage("invaliddecomposition", null, locale), null, false, messageSource.getMessage("notcomprisedbaserelation", null, locale)));
+                    break;
+                case 2:
+                    StringBuilder feedback = new StringBuilder();
+                    feedback.append(analysis.getDecompositionAnalysis().getMissingAttributes().size());
+                    if (analysis.getDecompositionAnalysis().getMissingAttributes().size() == 1) {
+                        feedback.append(" ").append(messageSource.getMessage("attributeis", null, locale)).append(" ");
+                    } else {
+                        feedback.append(" ").append(messageSource.getMessage("attributesare", null, locale)).append(" ");
+                    }
+                    feedback.append(messageSource.getMessage("notcompriseddecomposed", null, locale));
+                    criteria.add(new CriterionDto(messageSource.getMessage("invaliddecomposition", null, locale), null, false, feedback.toString()));
+                    break;
+                case 3:
+                    criteria.add(new CriterionDto(messageSource.getMessage("invaliddecomposition", null, locale), null, false,
+                        generateLevel3Div(analysis.getDecompositionAnalysis().getMissingAttributes(), "attributeisa", "attributesarea", "missing", locale, messageSource)));
+                    break;
+            }
+        }
+
+        //REPORT LOSS_LESS_ANALYSIS
+        if ((analysis.getLossLessAnalysis() != null) && (!analysis.getLossLessAnalysis().submissionSuitsSolution())) {
+            criteria.add(new CriterionDto(messageSource.getMessage("notlossless", null, locale), null, false, messageSource.getMessage("joinnotbaserelation", null, locale)));
+        }
+
+        //REPORT DEPENDENCIES_PRESERVATION_ANALYSIS
+        if ((analysis.getDepPresAnalysis() != null) && (!analysis.getDepPresAnalysis().submissionSuitsSolution())) {
+            int numberOfLostDependencies = analysis.getDepPresAnalysis().getLostFunctionalDependencies().size();
+            StringBuilder feedback = new StringBuilder();
+            if (submission.feedbackLevel() == 1) {
+                feedback.append(messageSource.getMessage("minonerelationlost", null, locale));
+            }
+
+            if (submission.feedbackLevel() == 2) {
+                feedback.append(numberOfLostDependencies);
+                if (numberOfLostDependencies == 1) {
+                    feedback.append(" ").append(messageSource.getMessage("dependencybaserelation", null, locale)).append(" ");
+                } else {
+                    feedback.append(" ").append(messageSource.getMessage("dependenciesbaserelation", null, locale)).append(" ");
+                }
+                feedback.append(" ").append(messageSource.getMessage("lost", null, locale)).append(".");
+            }
+
+            if ((submission.feedbackLevel() == 3)) {
+                feedback.append(generateLevel3Div(analysis.getDepPresAnalysis().getLostFunctionalDependencies(), "dependencybaserelationa", "dependenciesbaserelationa", "lost", locale, messageSource));
+            }
+
+            if (analysis.getMaxLostDependencies() < analysis.getDepPresAnalysis().lostFunctionalDependenciesCount()) {
+                criteria.add(new CriterionDto(messageSource.getMessage("toomanylost", null, locale), null, false, feedback.toString()));
+            } else {
+                criteria.add(new CriterionDto(messageSource.getMessage("notdependenciespreserving", null, locale), null, false, feedback.toString()));
+            }
+        }
+
+
+        return new GradingDto(task.getMaxPoints(), actualPoints, generalFeedback, criteria);
     }
 
     private GradingDto evaluateKeyDetermination(FanfTask task, SubmitSubmissionDto<FanfSubmissionDto> submission) throws Exception {
@@ -705,4 +945,60 @@ public class EvaluationService {
 
         return "Syntax error: " + culprit + " contains attributes \"" + attributesJoiner + "\" not found in the base relation";
     }
+
+    public String normalformLevelToString(NormalformLevel level, Locale locale) {
+        if (level == null) {
+            return messageSource.getMessage("none", null, locale);
+        } else if (level.equals(NormalformLevel.FIRST)) {
+            return messageSource.getMessage("first", null, locale);
+        } else if (level.equals(NormalformLevel.SECOND)) {
+            return messageSource.getMessage("second", null, locale);
+        } else if (level.equals(NormalformLevel.THIRD)) {
+            return messageSource.getMessage("third", null, locale);
+        } else if (level.equals(NormalformLevel.BOYCE_CODD)) {
+            return messageSource.getMessage("boycecodd", null, locale);
+        } else {
+            return "";
+        }
+    }
+
+    protected static String generateLevel3Div(Collection<?> collection, String singularNameKey, String pluralNameKey, String issueNameKey, Locale locale, MessageSource messageSource) {
+        StringBuilder description = new StringBuilder();
+
+        description.append("<div>").append(collection.size());
+
+        description.append(" ");
+        if (collection.size() == 1) {
+            description.append(messageSource.getMessage(singularNameKey, null, locale));
+        } else {
+            description.append(messageSource.getMessage(pluralNameKey, null, locale));
+        }
+        description.append(" ");
+
+        description.append(messageSource.getMessage(issueNameKey, null, locale)).append(".");
+        description.append("<p/>");
+
+        description.append(generateTable(collection));
+
+        description.append("</div>");
+
+        return description.toString();
+    }
+
+    private static String generateTable(Collection<?> collection) {
+        StringBuilder ret = new StringBuilder(TABLE_HEADER);
+
+        for (Object k : collection) {
+            ret.append("<tr><td>").append(k.toString()).append("</td></tr>");
+        }
+
+        ret.append("</table>");
+
+        return ret.toString();
+    }
+
+    protected static final String HTML_HEADER = "<head><link rel='stylesheet' href='/etutor/css/etutor.css'></link></head>";
+
+    protected static final String TABLE_HEADER = "<table border='2' rules='all'>";
+
 }

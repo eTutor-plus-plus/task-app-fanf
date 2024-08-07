@@ -5,7 +5,6 @@ import at.jku.dke.task_app.fanf.data.entities.FanfTask;
 import at.jku.dke.task_app.fanf.dto.FanfTaskDto;
 import at.jku.dke.task_app.fanf.dto.ModifyFanfTaskDto;
 import at.jku.dke.task_app.fanf.evaluation.model.*;
-import at.jku.dke.task_app.fanf.parser.NFParser;
 import at.jku.dke.task_app.fanf.services.FanfTaskService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +20,7 @@ public class TaskController extends BaseTaskController<FanfTask, FanfTaskDto, Mo
 
 
     private final ObjectMapper objectMapper;
+
     /**
      * Creates a new instance of class {@link TaskController}.
      *
@@ -45,13 +45,12 @@ public class TaskController extends BaseTaskController<FanfTask, FanfTaskDto, Mo
             throw new RuntimeException(e);
         }
 
-        fanfTaskDto.setBaseRelationAttributes(nfSpecification.getBaseRelation().getAttributes().toString().replace("[","").replace("]",""));
-        fanfTaskDto.setBaseRelationDependencies(nfSpecification.getBaseRelation().getFunctionalDependencies().toString().replace("[","").replace("]","")   );
-        fanfTaskDto.setBaseRelationDependencies(nfSpecification.getBaseRelation().getFunctionalDependencies().stream().map(Object::toString).collect(Collectors.joining("; ")).replace("[","").replace("]","") );
+        fanfTaskDto.setBaseRelationAttributes(nfSpecification.getBaseRelation().getAttributes().toString().replace("[", "").replace("]", ""));
+        fanfTaskDto.setBaseRelationDependencies(nfSpecification.getBaseRelation().getFunctionalDependencies().toString().replace("[", "").replace("]", ""));
+        fanfTaskDto.setBaseRelationDependencies(nfSpecification.getBaseRelation().getFunctionalDependencies().stream().map(Object::toString).collect(Collectors.joining("; ")).replace("[", "").replace("]", ""));
         fanfTaskDto.setBaseRelationName(nfSpecification.getBaseRelation().getName());
 
-        switch (fanfTaskDto.getSubtype())
-        {
+        switch (fanfTaskDto.getSubtype()) {
             case 0:
                 KeysDeterminationSpecification keysDeterminationSpecification = new KeysDeterminationSpecification();
                 try {
@@ -72,8 +71,19 @@ public class TaskController extends BaseTaskController<FanfTask, FanfTaskDto, Mo
                 }
 
 
+                if (normalizationSpecification.getTargetLevel().equals(NormalformLevel.BOYCE_CODD)) {
+                    fanfTaskDto.setNormalizationTargetLevel("BCNF");
+                }
+                if (normalizationSpecification.getTargetLevel().equals(NormalformLevel.FIRST)) {
+                    fanfTaskDto.setNormalizationTargetLevel("1NF");
+                }
+                if (normalizationSpecification.getTargetLevel().equals(NormalformLevel.SECOND)) {
+                    fanfTaskDto.setNormalizationTargetLevel("2NF");
+                }
+                if (normalizationSpecification.getTargetLevel().equals(NormalformLevel.THIRD)) {
+                    fanfTaskDto.setNormalizationTargetLevel("3NF");
+                }
 
-                fanfTaskDto.setNormalizationTargetLevel(normalizationSpecification.getTargetLevel().toString());
                 fanfTaskDto.setNormalizationMaxLostDependencies(normalizationSpecification.getMaxLostDependencies());
                 fanfTaskDto.setNormalizationPenaltyPerLostAttribute(normalizationSpecification.getPenaltyPerLostAttribute());
                 fanfTaskDto.setNormalizationPenaltyForLossyDecomposition(normalizationSpecification.getPenaltyForLossyDecomposition());
@@ -97,7 +107,6 @@ public class TaskController extends BaseTaskController<FanfTask, FanfTaskDto, Mo
                 }
 
 
-
                 fanfTaskDto.setMinimalCoverPenaltyPerNonCanonicalDependency(minimalCoverSpecification.getPenaltyPerNonCanonicalDependency());
                 fanfTaskDto.setMinimalCoverPenaltyPerTrivialDependency(minimalCoverSpecification.getPenaltyPerTrivialDependency());
                 fanfTaskDto.setMinimalCoverPenaltyPerExtraneousAttribute(minimalCoverSpecification.getPenaltyPerExtraneousAttribute());
@@ -114,7 +123,6 @@ public class TaskController extends BaseTaskController<FanfTask, FanfTaskDto, Mo
                 }
 
 
-
                 fanfTaskDto.setAttributeClosureBaseAttributes(attributeClosureSpecification.getBaseAttributes().toString());
                 fanfTaskDto.setAttributeClosurePenaltyPerMissingAttribute(attributeClosureSpecification.getPenaltyPerMissingAttribute());
                 fanfTaskDto.setAttributeClosurePenaltyPerIncorrectAttribute(attributeClosureSpecification.getPenaltyPerIncorrectAttribute());
@@ -126,7 +134,6 @@ public class TaskController extends BaseTaskController<FanfTask, FanfTaskDto, Mo
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
-
 
 
                 fanfTaskDto.setNormalFormDeterminationPenaltyForIncorrectOverallNormalform(normalformDeterminationSpecification.getPenaltyForIncorrectNFOverall());
