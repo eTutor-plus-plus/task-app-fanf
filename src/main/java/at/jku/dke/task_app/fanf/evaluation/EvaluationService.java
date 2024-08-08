@@ -177,7 +177,7 @@ public class EvaluationService {
             generalFeedback = messageSource.getMessage("incorrect", null, Locale.of(submission.language()));
         }
         if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
-            criteria.add(new CriterionDto("Syntax", null, false, "Syntax correct"));
+            criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
         } else {
             criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
         }
@@ -292,13 +292,6 @@ public class EvaluationService {
             return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty() ? "Syntax correct" : analysis.getSyntaxError(), null);
         }
 
-        //grade
-
-        BigDecimal actualPoints = task.getMaxPoints();
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getMissingAttributes().size() * specification.getPenaltyPerMissingAttribute()));
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getAdditionalAttributes().size() * specification.getPenaltyPerIncorrectAttribute()));
-
-        //report
         List<CriterionDto> criteria = new ArrayList<>();
         String generalFeedback = "";
 
@@ -308,10 +301,20 @@ public class EvaluationService {
             generalFeedback = messageSource.getMessage("incorrect", null, Locale.of(submission.language()));
         }
         if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
-            criteria.add(new CriterionDto("Syntax", null, false, "Syntax correct"));
+            criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
         } else {
             criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, null, criteria);
+
         }
+        //grade
+
+        BigDecimal actualPoints = task.getMaxPoints();
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getMissingAttributes().size() * specification.getPenaltyPerMissingAttribute()));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getAdditionalAttributes().size() * specification.getPenaltyPerIncorrectAttribute()));
+
+        //report
+
 
         switch (submission.feedbackLevel()) {
             case 0:
@@ -350,9 +353,9 @@ public class EvaluationService {
                     if (analysis.getAdditionalAttributes().size() > 0) {
                         feedback.append(analysis.getAdditionalAttributes().size());
                         if (analysis.getAdditionalAttributes().size() == 1) {
-                            feedback.append(" ").append(messageSource.getMessage("attributeisa", null, Locale.of(submission.language())));
+                            feedback.append(" ").append(messageSource.getMessage("attributeisa", null, Locale.of(submission.language()))).append(" ");
                         } else {
-                            feedback.append(" ").append(messageSource.getMessage("attributesarea", null, Locale.of(submission.language())));
+                            feedback.append(" ").append(messageSource.getMessage("attributesarea", null, Locale.of(submission.language()))).append(" ");
                         }
                         feedback.append(messageSource.getMessage("toomuch", null, Locale.of(submission.language())));
                         criteria.add(new CriterionDto(messageSource.getMessage("incorrectclosure", null, Locale.of(submission.language())), null, false, feedback.toString()));
@@ -363,12 +366,12 @@ public class EvaluationService {
             case 3:
                 if (analysis.getMissingAttributes() != null) {
                     if (analysis.getMissingAttributes().size() > 0) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectclosure", null, Locale.of(submission.language())), null, false, analysis.getMissingAttributes().toString() + messageSource.getMessage("missing", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectclosure", null, Locale.of(submission.language())), null, false, analysis.getMissingAttributes().toString().replace("[", "").replace("]", "") + " " + messageSource.getMessage("missing", null, Locale.of(submission.language()))));
                     }
                 }
                 if (analysis.getAdditionalAttributes() != null) {
                     if (analysis.getAdditionalAttributes().size() > 0) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectclosure", null, Locale.of(submission.language())), null, false, analysis.getAdditionalAttributes().toString() + messageSource.getMessage("toomuch", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectclosure", null, Locale.of(submission.language())), null, false, analysis.getAdditionalAttributes().toString().replace("[", "").replace("]", "") + " " + messageSource.getMessage("toomuch", null, Locale.of(submission.language()))));
                     }
                 }
                 break;
@@ -437,6 +440,21 @@ public class EvaluationService {
             return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty() ? "Syntax correct" : analysis.getSyntaxError(), null);
         }
 
+        List<CriterionDto> criteria = new ArrayList<>();
+        String generalFeedback = "";
+
+        if (analysis.submissionSuitsSolution()) {
+            generalFeedback = messageSource.getMessage("correct", null, Locale.of(submission.language()));
+        } else {
+            generalFeedback = messageSource.getMessage("incorrect", null, Locale.of(submission.language()));
+        }
+        if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
+            criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
+        } else {
+            criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, null, criteria);
+        }
+
         //grade
         BigDecimal actualPoints = task.getMaxPoints();
         actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getCanonicalRepresentationAnalysis().getNotCanonicalDependencies().size() * specification.getPenaltyPerNonCanonicalDependency()));
@@ -449,19 +467,7 @@ public class EvaluationService {
 
         //report
 
-        List<CriterionDto> criteria = new ArrayList<>();
-        String generalFeedback = "";
 
-        if (analysis.submissionSuitsSolution()) {
-            generalFeedback = messageSource.getMessage("correct", null, Locale.of(submission.language()));
-        } else {
-            generalFeedback = messageSource.getMessage("incorrect", null, Locale.of(submission.language()));
-        }
-        if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
-            criteria.add(new CriterionDto("Syntax", null, false, "Syntax correct"));
-        } else {
-            criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
-        }
 
         switch (submission.feedbackLevel()) {
             case 0:
@@ -501,36 +507,35 @@ public class EvaluationService {
                         if (analysis.getDependenciesCoverAnalysis().getAdditionalDependencies().size() > 0) {
                             feedback.append(messageSource.getMessage("dependencynotderived", null, Locale.of(submission.language())));
                         }
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectnumberdependencies", null, Locale.of(submission.language())), null, false, feedback.toString()));
                     }
-                    criteria.add(new CriterionDto(messageSource.getMessage("incorrectnumberdependencies", null, Locale.of(submission.language())), null, false, feedback.toString()));
                 }
 
 
-                criteria.add(new CriterionDto("Missing Dependencies", null, false, analysis.getDependenciesCoverAnalysis().getMissingDependencies().size() + " Missing Dependencies"));
-                criteria.add(new CriterionDto("Additional Dependencies", null, false, analysis.getDependenciesCoverAnalysis().getAdditionalDependencies().size() + " Additional Dependencies"));
                 break;
             case 2:
                 if (analysis.getCanonicalRepresentationAnalysis() != null) {
                     if (!analysis.getCanonicalRepresentationAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectcanonicalrepresentation", null, Locale.of(submission.language())), null, false, analysis.getCanonicalRepresentationAnalysis().getNotCanonicalDependencies().size() + messageSource.getMessage("notcanonicalrepresentation", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectcanonicalrepresentation", null, Locale.of(submission.language())), null, false, analysis.getCanonicalRepresentationAnalysis().getNotCanonicalDependencies().size()+" " + messageSource.getMessage("notcanonicalrepresentation", null, Locale.of(submission.language()))));
                     }
                 }
 
                 if (analysis.getTrivialDependenciesAnalysis() != null) {
                     if (!analysis.getTrivialDependenciesAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("trivialdependencies", null, Locale.of(submission.language())), null, false, analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().size() + " " + (analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().size() == 1 ? messageSource.getMessage("dependenciesis", null, Locale.of(submission.language())) : messageSource.getMessage("dependenciesare", null, Locale.of(submission.language()))) + messageSource.getMessage("trivial", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("trivialdependencies", null, Locale.of(submission.language())), null, false, analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().size() + " " + (analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().size() == 1 ? messageSource.getMessage("dependencyis", null, Locale.of(submission.language())) : messageSource.getMessage("dependenciesare", null, Locale.of(submission.language()))) +" "+ messageSource.getMessage("trivial", null, Locale.of(submission.language()))));
                     }
                 }
 
                 if (analysis.getExtraneousAttributesAnalysis() != null) {
                     if (!analysis.getExtraneousAttributesAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("extraneousattribute", null, Locale.of(submission.language())), null, false, analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().size() + " " + (analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().size() == 1 ? messageSource.getMessage("dependencyis", null, Locale.of(submission.language())) : messageSource.getMessage("dependenciesare", null, Locale.of(submission.language()))) + messageSource.getMessage("redundand", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("extraneousattribute", null, Locale.of(submission.language())), null, false, analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().size() + " " + (analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().size() == 1 ? messageSource.getMessage("extraneousattributefound", null, Locale.of(submission.language())) : messageSource.getMessage("extraneousattributesfound", null, Locale.of(submission.language())))));
                     }
                 }
 
                 if (analysis.getRedundantDependenciesAnalysis() != null) {
                     if (!analysis.getRedundantDependenciesAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("redundanddependency", null, Locale.of(submission.language())), null, false, analysis.getRedundantDependenciesAnalysis().getRedundantDependencies().size() + " " + messageSource.getMessage("minoneredundant", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("redundanddependency", null, Locale.of(submission.language())), null, false, analysis.getRedundantDependenciesAnalysis().getRedundantDependencies().size() + " " + (analysis.getRedundantDependenciesAnalysis().getRedundantDependencies().size() == 1 ? messageSource.getMessage("dependencyis", null, Locale.of(submission.language())) : messageSource.getMessage("dependenciesare", null, Locale.of(submission.language()))) + messageSource.getMessage("redundand", null, Locale.of(submission.language()))));
+
                     }
                 }
                 if (analysis.getDependenciesCoverAnalysis() != null) {
@@ -557,30 +562,31 @@ public class EvaluationService {
                             }
                             feedback.append(messageSource.getMessage("cannotbederived", null, Locale.of(submission.language())));
                         }
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectnumberdependencies", null, Locale.of(submission.language())), null, false, feedback.toString()));
+
                     }
-                    criteria.add(new CriterionDto(messageSource.getMessage("incorrectnumberdependencies", null, Locale.of(submission.language())), null, false, feedback.toString()));
                 }
                 break;
             case 3:
                 if (analysis.getCanonicalRepresentationAnalysis() != null) {
                     if (!analysis.getCanonicalRepresentationAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectcanonicalrepresentation", null, Locale.of(submission.language())), null, false, analysis.getCanonicalRepresentationAnalysis().getNotCanonicalDependencies().toString() + messageSource.getMessage("notcanonicalrepresentation", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectcanonicalrepresentation", null, Locale.of(submission.language())), null, false, analysis.getCanonicalRepresentationAnalysis().getNotCanonicalDependencies().toString().replace("[","").replace("]","") +" "+ messageSource.getMessage("notcanonicalrepresentation", null, Locale.of(submission.language()))));
                     }
                 }
                 if (analysis.getTrivialDependenciesAnalysis() != null) {
                     if (!analysis.getTrivialDependenciesAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("trivialdependencies", null, Locale.of(submission.language())), null, false, messageSource.getMessage("trivial", null, Locale.of(submission.language())) + analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().toString()));
+                        criteria.add(new CriterionDto(messageSource.getMessage("trivialdependencies", null, Locale.of(submission.language())), null, false, analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().toString().replace("[","").replace("]","")+" " + messageSource.getMessage("istrivial", null, Locale.of(submission.language()))));
                     }
                 }
                 if (analysis.getExtraneousAttributesAnalysis() != null) {
                     if (!analysis.getExtraneousAttributesAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("extraneousattribute", null, Locale.of(submission.language())), null, false, analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().toString()));
+                        criteria.add(new CriterionDto(messageSource.getMessage("extraneousattribute", null, Locale.of(submission.language())), null, false, analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().toString().replace("[","").replace("]","")));
                     }
                 }
 
                 if (analysis.getRedundantDependenciesAnalysis() != null) {
                     if (!analysis.getRedundantDependenciesAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("redundanddependency", null, Locale.of(submission.language())), null, false, analysis.getRedundantDependenciesAnalysis().getRedundantDependencies().toString()));
+                        criteria.add(new CriterionDto(messageSource.getMessage("redundanddependency", null, Locale.of(submission.language())), null, false, analysis.getRedundantDependenciesAnalysis().getRedundantDependencies().toString().replace("[","").replace("]","")));
                     }
                 }
 
@@ -608,8 +614,9 @@ public class EvaluationService {
                             }
                             feedback.append(messageSource.getMessage("cannotbederived", null, Locale.of(submission.language())));
                         }
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectnumberdependencies", null, Locale.of(submission.language())), null, false, feedback.toString().replace("[","").replace("]","")));
+
                     }
-                    criteria.add(new CriterionDto(messageSource.getMessage("incorrectnumberdependencies", null, Locale.of(submission.language())), null, false, feedback.toString()));
                 }
                 break;
         }
@@ -732,7 +739,7 @@ public class EvaluationService {
 
         //SYNTAX
         if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
-            criteria.add(new CriterionDto("Syntax", null, false, "Syntax correct"));
+            criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
         } else {
             criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
         }
@@ -861,12 +868,6 @@ public class EvaluationService {
 
         }
 
-
-        //grade
-        BigDecimal actualPoints = task.getMaxPoints();
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getMissingKeys().size() * specification.getPenaltyPerMissingKey()));
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getAdditionalKeys().size() * specification.getPenaltyPerIncorrectKey()));
-
         List<CriterionDto> criteria = new ArrayList<>();
         String generalFeedback = "";
 
@@ -879,7 +880,15 @@ public class EvaluationService {
             criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
         } else {
             criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, null, criteria);
         }
+
+        //grade
+        BigDecimal actualPoints = task.getMaxPoints();
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getMissingKeys().size() * specification.getPenaltyPerMissingKey()));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getAdditionalKeys().size() * specification.getPenaltyPerIncorrectKey()));
+
+
 
         switch (submission.feedbackLevel()) {
             case 0:

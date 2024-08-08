@@ -123,7 +123,7 @@ public class TaskController extends BaseTaskController<FanfTask, FanfTaskDto, Mo
                 }
 
 
-                fanfTaskDto.setAttributeClosureBaseAttributes(attributeClosureSpecification.getBaseAttributes().toString());
+                fanfTaskDto.setAttributeClosureBaseAttributes(attributeClosureSpecification.getBaseAttributes().toString().replace("[", "").replace("]", ""));
                 fanfTaskDto.setAttributeClosurePenaltyPerMissingAttribute(attributeClosureSpecification.getPenaltyPerMissingAttribute());
                 fanfTaskDto.setAttributeClosurePenaltyPerIncorrectAttribute(attributeClosureSpecification.getPenaltyPerIncorrectAttribute());
                 break;
