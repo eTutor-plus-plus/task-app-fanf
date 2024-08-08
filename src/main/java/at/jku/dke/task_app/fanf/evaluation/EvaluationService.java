@@ -278,10 +278,7 @@ public class EvaluationService {
             if (!hasIncorrectAttributes) {
                 submissionRelation.setAttributes(attributes);
 
-                analysis = (AttributeClosureAnalysis) AttributeClosureAnalyzer.analyze(
-                    specification.getBaseRelation().getFunctionalDependencies(),
-                    specification.getBaseAttributes(),
-                    submissionRelation.getAttributes());
+                analysis = (AttributeClosureAnalysis) AttributeClosureAnalyzer.analyze(specification.getBaseRelation().getFunctionalDependencies(), specification.getBaseAttributes(), submissionRelation.getAttributes());
             }
         }
 
@@ -366,14 +363,12 @@ public class EvaluationService {
             case 3:
                 if (analysis.getMissingAttributes() != null) {
                     if (analysis.getMissingAttributes().size() > 0) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectclosure", null, Locale.of(submission.language())), null, false,
-                            analysis.getMissingAttributes().toString() + messageSource.getMessage("missing", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectclosure", null, Locale.of(submission.language())), null, false, analysis.getMissingAttributes().toString() + messageSource.getMessage("missing", null, Locale.of(submission.language()))));
                     }
                 }
                 if (analysis.getAdditionalAttributes() != null) {
                     if (analysis.getAdditionalAttributes().size() > 0) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectclosure", null, Locale.of(submission.language())), null, false,
-                            analysis.getAdditionalAttributes().toString() + messageSource.getMessage("toomuch", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectclosure", null, Locale.of(submission.language())), null, false, analysis.getAdditionalAttributes().toString() + messageSource.getMessage("toomuch", null, Locale.of(submission.language()))));
                     }
                 }
                 break;
@@ -517,33 +512,25 @@ public class EvaluationService {
             case 2:
                 if (analysis.getCanonicalRepresentationAnalysis() != null) {
                     if (!analysis.getCanonicalRepresentationAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectcanonicalrepresentation", null, Locale.of(submission.language())), null, false,
-                            analysis.getCanonicalRepresentationAnalysis().getNotCanonicalDependencies().size() + messageSource.getMessage("notcanonicalrepresentation", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectcanonicalrepresentation", null, Locale.of(submission.language())), null, false, analysis.getCanonicalRepresentationAnalysis().getNotCanonicalDependencies().size() + messageSource.getMessage("notcanonicalrepresentation", null, Locale.of(submission.language()))));
                     }
                 }
 
                 if (analysis.getTrivialDependenciesAnalysis() != null) {
                     if (!analysis.getTrivialDependenciesAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("trivialdependencies", null, Locale.of(submission.language())), null, false,
-                            analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().size() + " " +
-                                (analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().size() == 1 ? messageSource.getMessage("dependenciesis", null, Locale.of(submission.language())) : messageSource.getMessage("dependenciesare", null, Locale.of(submission.language())))
-                                + messageSource.getMessage("trivial", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("trivialdependencies", null, Locale.of(submission.language())), null, false, analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().size() + " " + (analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().size() == 1 ? messageSource.getMessage("dependenciesis", null, Locale.of(submission.language())) : messageSource.getMessage("dependenciesare", null, Locale.of(submission.language()))) + messageSource.getMessage("trivial", null, Locale.of(submission.language()))));
                     }
                 }
 
                 if (analysis.getExtraneousAttributesAnalysis() != null) {
                     if (!analysis.getExtraneousAttributesAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("extraneousattribute", null, Locale.of(submission.language())), null, false,
-                            analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().size() + " " +
-                                (analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().size() == 1 ? messageSource.getMessage("dependencyis", null, Locale.of(submission.language())) : messageSource.getMessage("dependenciesare", null, Locale.of(submission.language())))
-                                + messageSource.getMessage("redundand", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("extraneousattribute", null, Locale.of(submission.language())), null, false, analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().size() + " " + (analysis.getExtraneousAttributesAnalysis().getExtraneousAttributes().size() == 1 ? messageSource.getMessage("dependencyis", null, Locale.of(submission.language())) : messageSource.getMessage("dependenciesare", null, Locale.of(submission.language()))) + messageSource.getMessage("redundand", null, Locale.of(submission.language()))));
                     }
                 }
 
                 if (analysis.getRedundantDependenciesAnalysis() != null) {
                     if (!analysis.getRedundantDependenciesAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("redundanddependency", null, Locale.of(submission.language())), null, false,
-                            analysis.getRedundantDependenciesAnalysis().getRedundantDependencies().size() + " " + messageSource.getMessage("minoneredundant", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("redundanddependency", null, Locale.of(submission.language())), null, false, analysis.getRedundantDependenciesAnalysis().getRedundantDependencies().size() + " " + messageSource.getMessage("minoneredundant", null, Locale.of(submission.language()))));
                     }
                 }
                 if (analysis.getDependenciesCoverAnalysis() != null) {
@@ -577,14 +564,12 @@ public class EvaluationService {
             case 3:
                 if (analysis.getCanonicalRepresentationAnalysis() != null) {
                     if (!analysis.getCanonicalRepresentationAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectcanonicalrepresentation", null, Locale.of(submission.language())), null, false,
-                            analysis.getCanonicalRepresentationAnalysis().getNotCanonicalDependencies().toString() + messageSource.getMessage("notcanonicalrepresentation", null, Locale.of(submission.language()))));
+                        criteria.add(new CriterionDto(messageSource.getMessage("incorrectcanonicalrepresentation", null, Locale.of(submission.language())), null, false, analysis.getCanonicalRepresentationAnalysis().getNotCanonicalDependencies().toString() + messageSource.getMessage("notcanonicalrepresentation", null, Locale.of(submission.language()))));
                     }
                 }
                 if (analysis.getTrivialDependenciesAnalysis() != null) {
                     if (!analysis.getTrivialDependenciesAnalysis().submissionSuitsSolution()) {
-                        criteria.add(new CriterionDto(messageSource.getMessage("trivialdependencies", null, Locale.of(submission.language())), null, false,
-                            messageSource.getMessage("trivial", null, Locale.of(submission.language())) + analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().toString()));
+                        criteria.add(new CriterionDto(messageSource.getMessage("trivialdependencies", null, Locale.of(submission.language())), null, false, messageSource.getMessage("trivial", null, Locale.of(submission.language())) + analysis.getTrivialDependenciesAnalysis().getTrivialDependencies().toString()));
                     }
                 }
                 if (analysis.getExtraneousAttributesAnalysis() != null) {
@@ -713,44 +698,22 @@ public class EvaluationService {
 
         BigDecimal actualPoints = task.getMaxPoints();
 
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getDecompositionAnalysis().getMissingAttributes().size())
-            .multiply(BigDecimal.valueOf(specification.getPenaltyPerLostAttribute())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getDecompositionAnalysis().getMissingAttributes().size()).multiply(BigDecimal.valueOf(specification.getPenaltyPerLostAttribute())));
         if (!analysis.getLossLessAnalysis().submissionSuitsSolution()) {
             actualPoints = actualPoints.subtract(BigDecimal.valueOf(specification.getPenaltyForLossyDecomposition()));
         }
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getCanonicalRepresentationAnalyses().values().stream()
-            .mapToInt(canonicalRepresentationAnalysis -> canonicalRepresentationAnalysis.getNotCanonicalDependencies().size())
-            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerNonCanonicalDependency())));
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getTrivialDependenciesAnalyses().values().stream()
-            .mapToInt(trivialDependenciesAnalysis -> trivialDependenciesAnalysis.getTrivialDependencies().size())
-            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerTrivialDependency())));
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getExtraneousAttributesAnalyses().values().stream()
-            .mapToInt(extraneousAttributeAnalysis -> extraneousAttributeAnalysis.getExtraneousAttributes().values().stream()
-                .mapToInt(List::size)
-                .sum())
-            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerExtraneousAttributeInDependencies())));
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getRedundantDependenciesAnalyses().values().stream()
-            .mapToInt(redundantDependenciesAnalysis -> redundantDependenciesAnalysis.getRedundantDependencies().size())
-            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerRedundantDependency())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getCanonicalRepresentationAnalyses().values().stream().mapToInt(canonicalRepresentationAnalysis -> canonicalRepresentationAnalysis.getNotCanonicalDependencies().size()).sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerNonCanonicalDependency())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getTrivialDependenciesAnalyses().values().stream().mapToInt(trivialDependenciesAnalysis -> trivialDependenciesAnalysis.getTrivialDependencies().size()).sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerTrivialDependency())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getExtraneousAttributesAnalyses().values().stream().mapToInt(extraneousAttributeAnalysis -> extraneousAttributeAnalysis.getExtraneousAttributes().values().stream().mapToInt(List::size).sum()).sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerExtraneousAttributeInDependencies())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getRedundantDependenciesAnalyses().values().stream().mapToInt(redundantDependenciesAnalysis -> redundantDependenciesAnalysis.getRedundantDependencies().size()).sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerRedundantDependency())));
         if (analysis.getDepPresAnalysis().lostFunctionalDependenciesCount() > analysis.getMaxLostDependencies()) {
-            actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getDepPresAnalysis().lostFunctionalDependenciesCount() - analysis.getMaxLostDependencies())
-                .multiply(BigDecimal.valueOf(specification.getPenaltyPerExcessiveLostDependency())));
+            actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getDepPresAnalysis().lostFunctionalDependenciesCount() - analysis.getMaxLostDependencies()).multiply(BigDecimal.valueOf(specification.getPenaltyPerExcessiveLostDependency())));
         }
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getRbrAnalyses().values().stream()
-            .mapToInt(rbrAnalysis -> rbrAnalysis.getMissingFunctionalDependencies().size())
-            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerMissingNewDependency())));
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getRbrAnalyses().values().stream()
-            .mapToInt(rbrAnalysis -> rbrAnalysis.getAdditionalFunctionalDependencies().size())
-            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerIncorrectNewDependency())));
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getKeysAnalyses().values().stream()
-            .mapToInt(keysAnalysis -> keysAnalysis.getMissingKeys().size())
-            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerMissingKey())));
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getKeysAnalyses().values().stream()
-            .mapToInt(keysAnalysis -> keysAnalysis.getAdditionalKeys().size())
-            .sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerIncorrectKey())));
-        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getNormalformAnalyses().values().stream()
-            .filter(normalformAnalysis -> !normalformAnalysis.submissionSuitsSolution())
-            .count()).multiply(BigDecimal.valueOf(specification.getPenaltyPerIncorrectNFRelation())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getRbrAnalyses().values().stream().mapToInt(rbrAnalysis -> rbrAnalysis.getMissingFunctionalDependencies().size()).sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerMissingNewDependency())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getRbrAnalyses().values().stream().mapToInt(rbrAnalysis -> rbrAnalysis.getAdditionalFunctionalDependencies().size()).sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerIncorrectNewDependency())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getKeysAnalyses().values().stream().mapToInt(keysAnalysis -> keysAnalysis.getMissingKeys().size()).sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerMissingKey())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getKeysAnalyses().values().stream().mapToInt(keysAnalysis -> keysAnalysis.getAdditionalKeys().size()).sum()).multiply(BigDecimal.valueOf(specification.getPenaltyPerIncorrectKey())));
+        actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getNormalformAnalyses().values().stream().filter(normalformAnalysis -> !normalformAnalysis.submissionSuitsSolution()).count()).multiply(BigDecimal.valueOf(specification.getPenaltyPerIncorrectNFRelation())));
 
         //get language
         Locale locale = Locale.of(submission.language());
@@ -794,8 +757,7 @@ public class EvaluationService {
                     criteria.add(new CriterionDto(messageSource.getMessage("invaliddecomposition", null, locale), null, false, feedback.toString()));
                     break;
                 case 3:
-                    criteria.add(new CriterionDto(messageSource.getMessage("invaliddecomposition", null, locale), null, false,
-                        generateLevel3Div(analysis.getDecompositionAnalysis().getMissingAttributes(), "attributeisa", "attributesarea", "missing", locale, messageSource)));
+                    criteria.add(new CriterionDto(messageSource.getMessage("invaliddecomposition", null, locale), null, false, generateLevel3Div(analysis.getDecompositionAnalysis().getMissingAttributes(), "attributeisa", "attributesarea", "missing", locale, messageSource)));
                     break;
             }
         }
@@ -914,7 +876,7 @@ public class EvaluationService {
             generalFeedback = messageSource.getMessage("incorrect", null, Locale.of(submission.language()));
         }
         if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
-            criteria.add(new CriterionDto("Syntax", null, false, "Syntax correct"));
+            criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
         } else {
             criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
         }
@@ -923,15 +885,29 @@ public class EvaluationService {
             case 0:
                 break;
             case 1:
+                if (!analysis.getMissingKeys().isEmpty() && analysis.getMissingKeys() != null) {
+                    criteria.add(new CriterionDto(messageSource.getMessage("missingKeys", null, Locale.of(submission.language())), null, false, messageSource.getMessage("keymissing", null, Locale.of(submission.language()))));
+                }
+
+                if (!analysis.getAdditionalKeys().isEmpty() && analysis.getAdditionalKeys() != null) {
+                    criteria.add(new CriterionDto(messageSource.getMessage("additionalKeys", null, Locale.of(submission.language())), null, false, messageSource.getMessage("keytoomuch", null, Locale.of(submission.language()))));
+                }
+                break;
             case 2:
-                criteria.add(new CriterionDto(messageSource.getMessage("missingKeys", null, Locale.of(submission.language())), null, false,
-                    analysis.getMissingKeys().size() + " " + messageSource.getMessage("missingKeys", null, Locale.of(submission.language()))));
-                criteria.add(new CriterionDto(messageSource.getMessage("additionalKeys", null, Locale.of(submission.language())), null, false,
-                    analysis.getAdditionalKeys().size() + " " + messageSource.getMessage("additionalKeys", null, Locale.of(submission.language()))));
+                if (!analysis.getMissingKeys().isEmpty() && analysis.getMissingKeys() != null) {
+                    criteria.add(new CriterionDto(messageSource.getMessage("missingKeys", null, Locale.of(submission.language())), null, false, analysis.getMissingKeys().size() + " " + messageSource.getMessage("missingKeys", null, Locale.of(submission.language()))));
+                }
+                if (!analysis.getAdditionalKeys().isEmpty() && analysis.getAdditionalKeys() != null) {
+                    criteria.add(new CriterionDto(messageSource.getMessage("additionalKeys", null, Locale.of(submission.language())), null, false, analysis.getAdditionalKeys().size() + " " + messageSource.getMessage("additionalKeys", null, Locale.of(submission.language()))));
+                }
                 break;
             case 3:
-                criteria.add(new CriterionDto(messageSource.getMessage("missingKeys", null, Locale.of(submission.language())), null, false, analysis.getMissingKeys().toString()));
-                criteria.add(new CriterionDto(messageSource.getMessage("additionalKeys", null, Locale.of(submission.language())), null, false, analysis.getAdditionalKeys().toString()));
+                if (!analysis.getMissingKeys().isEmpty() && analysis.getMissingKeys() != null) {
+                    criteria.add(new CriterionDto(messageSource.getMessage("missingKeys", null, Locale.of(submission.language())), null, false, analysis.getMissingKeys().toString().replace("[", "").replace("]", "")));
+                }
+                if (!analysis.getAdditionalKeys().isEmpty() && analysis.getAdditionalKeys() != null) {
+                    criteria.add(new CriterionDto(messageSource.getMessage("additionalKeys", null, Locale.of(submission.language())), null, false, analysis.getAdditionalKeys().toString().replace("[", "").replace("]", "")));
+                }
                 break;
 
         }
