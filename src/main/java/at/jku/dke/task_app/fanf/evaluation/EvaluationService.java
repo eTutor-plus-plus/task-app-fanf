@@ -764,9 +764,9 @@ public class EvaluationService {
 
         String generalFeedback = "";
         if (analysis.submissionSuitsSolution()) {
-            generalFeedback = messageSource.getMessage("correctsolution", null, locale);
+            generalFeedback = messageSource.getMessage("correct", null, locale);
         } else {
-            generalFeedback = messageSource.getMessage("notcorrectsolution", null, locale);
+            generalFeedback = messageSource.getMessage("incorrect", null, locale);
         }
 
 
