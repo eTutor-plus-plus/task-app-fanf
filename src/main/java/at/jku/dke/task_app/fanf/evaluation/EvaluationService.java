@@ -151,11 +151,17 @@ public class EvaluationService {
         //Set Submission
         analysis.setSubmission(normalformDeterminationSubmission);
 
+
+        List<CriterionDto> criteria = new ArrayList<>();
         //SyntaxCheck on RUN
 
         if (submission.mode().equals(SubmissionMode.RUN)) {
-
-            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty() ? "Syntax correct" : analysis.getSyntaxError(), null);
+            if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
+                criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
+            } else {
+                criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
+            }
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, null, criteria);
         }
 
         //grade
@@ -168,7 +174,7 @@ public class EvaluationService {
         actualPoints = actualPoints.subtract(BigDecimal.valueOf(analysis.getWrongLeveledDependencies().size() * specification.getPenaltyPerIncorrectNFDependency()));
 
         //report
-        List<CriterionDto> criteria = new ArrayList<>();
+
         String generalFeedback = "";
 
         if (analysis.submissionSuitsSolution()) {
@@ -180,6 +186,7 @@ public class EvaluationService {
             criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
         } else {
             criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, generalFeedback, criteria);
         }
 
         if (!analysis.getOverallNormalformLevel().equals(analysis.getSubmittedLevel())) {
@@ -287,12 +294,19 @@ public class EvaluationService {
 
 
         //SyntaxCheck on RUN
-        if (submission.mode().equals(SubmissionMode.RUN)) {
+        List<CriterionDto> criteria = new ArrayList<>();
 
-            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty() ? "Syntax correct" : analysis.getSyntaxError(), null);
+        if (submission.mode().equals(SubmissionMode.RUN)) {
+            if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
+                criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
+            } else {
+                criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
+
+            }
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, null, criteria);
         }
 
-        List<CriterionDto> criteria = new ArrayList<>();
+
         String generalFeedback = "";
 
         if (analysis.submissionSuitsSolution()) {
@@ -433,14 +447,21 @@ public class EvaluationService {
         analysis.setSubmission(submission);
 
 
+        List<CriterionDto> criteria = new ArrayList<>();
         //check mode
 
         if (submission.mode().equals(SubmissionMode.RUN)) {
 
-            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty() ? "Syntax correct" : analysis.getSyntaxError(), null);
+            if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
+                criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
+            } else {
+                criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
+
+            }
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, null, criteria);
         }
 
-        List<CriterionDto> criteria = new ArrayList<>();
+
         String generalFeedback = "";
 
         if (analysis.submissionSuitsSolution()) {
@@ -694,11 +715,24 @@ public class EvaluationService {
             }
         }
         analysis.setSubmission((Serializable) submissionSet);
-
+        List<CriterionDto> criteria = new ArrayList<>();
 
         if (submission.mode().equals(SubmissionMode.RUN)) {
 
-            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty() ? "Syntax correct" : analysis.getSyntaxError(), null);
+            if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
+                criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
+            } else {
+                criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
+            }
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, null, criteria);
+        }
+
+        //SYNTAX
+        if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
+            criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
+        } else {
+            criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, null, criteria);
         }
 
         //grade
@@ -735,14 +769,9 @@ public class EvaluationService {
             generalFeedback = messageSource.getMessage("notcorrectsolution", null, locale);
         }
 
-        List<CriterionDto> criteria = new ArrayList<>();
 
-        //SYNTAX
-        if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
-            criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
-        } else {
-            criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
-        }
+
+
 
         //REPORT DECOMPOSITION_ANALYSIS
         if ((analysis.getDecompositionAnalysis() != null) && (!analysis.getDecompositionAnalysis().submissionSuitsSolution())) {
@@ -861,14 +890,20 @@ public class EvaluationService {
         analysis.setSubmission(submissionRelation);
 
         //Check mode
+        List<CriterionDto> criteria = new ArrayList<>();
 
         if (submission.mode().equals(SubmissionMode.RUN)) {
 
-            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty() ? "Syntax correct" : analysis.getSyntaxError(), null);
+            if (analysis.getSyntaxError() == null || analysis.getSyntaxError().isEmpty()) {
+                criteria.add(new CriterionDto("Syntax", null, true, "Syntax correct"));
+            } else {
+                criteria.add(new CriterionDto("Syntax", null, false, analysis.getSyntaxError()));
 
+            }
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, null, criteria);
         }
 
-        List<CriterionDto> criteria = new ArrayList<>();
+
         String generalFeedback = "";
 
         if (analysis.submissionSuitsSolution()) {
